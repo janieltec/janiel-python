@@ -4,7 +4,7 @@ import re
 
 from webob import Response
 
-from ryu.app import con_switch_key as cs_key 
+from ryu.app import conf_switch_key as cs_key 
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.base import app_manager
 from ryu.controller import conf_switch
@@ -93,7 +93,7 @@ BASE_URL = '/qos'
 REQUIREMENTS = {'switchid': SWITCHID_PATTERN,
 				 'vlanid': VLANID_PATTERN}
 
-LOG = loggin.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 class RestQoSAPI(app_manager.RyuApp):
 	OFP_VERSIONS = [ofproto_v1_0.OFP_VERSION,
@@ -150,7 +150,7 @@ class RestQoSAPI(app_manager.RyuApp):
 		else:
 			QoSController._LOGGER.debug("unknown event: %s", ev)
 
-	@set_ev_cls(conf_switch.EventConfigSwitchDel)
+	@set_ev_cls(conf_switch.EventConfSwitchDel)
 	def conf_switch_del_handler(self, dev):
 		if ev.key == cs_key.OVSDB_ADDR:
 			QoSController.delete_ovsdb_addr(dv.dpid)
@@ -158,7 +158,7 @@ class RestQoSAPI(app_manager.RyuApp):
 			QoSController._LOGGER.debug("unknown event: %s", ev)
 
 	#for OpenFlow version1.0
-	@set_ev_cls(ofp_event.EventDP, dpset.DPSET_EV_DISPATCHER)
+	@set_ev_cls(dpset.EventDP, dpset.DPSET_EV_DISPATCHER)
 	def handler_datapath(self, ev):
 		if ev.enter:
 			QoSController.regist_ofs(ev.dp, self.CONF)
@@ -204,7 +204,7 @@ class QoSOfsList(dict):
 		return dps
 
 class QoSController(ControllerBase):
-	_OFS_LIST = QoSOfList()
+	_OFS_LIST = QoSOfsList()
 	_LOGGER = None 
 
 	def __init__(self, req, link, data, **config):
@@ -250,55 +250,55 @@ class QoSController(ControllerBase):
 		ofs = QoSController._OFS_LIST.get(dpid, None)
 		ofs.set_ovsdb_addr(dpid, None)
 
-	@route('qos_switch', BASE_URL + '/queue/{switchid}', method=[GET], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/queue/{switchid}', methods=['GET'], requirements = REQUIREMENTS)
 	def get_queue(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'get_queue', None)	
 
-	@route('qos_switch', BASE_URL + '/queue/{switchid}', method=[POST], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/queue/{switchid}', methods=['POST'], requirements = REQUIREMENTS)
 	def set_queue(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'set_queue', None)	
 
-	@route('qos_switch', BASE_URL + '/queue/{switchid}', method=[DELETE], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/queue/{switchid}', methods=['DELETE'], requirements = REQUIREMENTS)
 	def delete_queue(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'delete_queue', None)	
 
-	@route('qos_switch', BASE_URL + '/queue/status{switchid}', method=[GET], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/queue/status{switchid}', methods=['GET'], requirements = REQUIREMENTS)
 	def get_status(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'get_status', None)	
 
-	@route('qos_switch', BASE_URL + '/rules/{switchid}', method=[GET], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/rules/{switchid}', methods=['GET'], requirements = REQUIREMENTS)
 	def get_qos(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'get_qos', None)	
 
-	@route('qos_switch', BASE_URL + '/rules/{switchid}/{vlanid}', method=[GET], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/rules/{switchid}/{vlanid}', methods=['GET'], requirements = REQUIREMENTS)
 	def get_vlan_qos(self, req, switchid, vlanid, **_kwargs):
 		return self._access_switch(req, switchid, vlanid, 'get_qos', None)	
 
-	@route('qos_switch', BASE_URL + '/rules/{switchid}', method=[POST], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/rules/{switchid}', methods=['POST'], requirements = REQUIREMENTS)
 	def set_qos(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'set_qos', None)	
 
-	@route('qos_switch', BASE_URL + '/rules/{switchid}/{vlanid}', method=[POST], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/rules/{switchid}/{vlanid}', methods=['POST'], requirements = REQUIREMENTS)
 	def set_vlan_qos(self, req, switchid, vlanid, **_kwargs):
 		return self._access_switch(req, switchid, vlanid, 'set_qos', None)	
 
-	@route('qos_switch', BASE_URL + '/rules/{switchid}', method=[DELETE], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/rules/{switchid}', methods=['DELETE'], requirements = REQUIREMENTS)
 	def delete_qos(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'delete_qos', None)	
 
-	@route('qos_switch', BASE_URL + '/rules/{switchid}/{vlanid}', method=[DELETE], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/rules/{switchid}/{vlanid}', methods=['DELETE'], requirements = REQUIREMENTS)
 	def delete_vlan_qos(self, req, switchid, vlanid, **_kwargs):
 		return self._access_switch(req, switchid, vlanid, 'delete_qos', None)	
 
-	@route('qos_switch', BASE_URL + '/meter/{switchid}', method=[GET], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/meter/{switchid}', methods=['GET'], requirements = REQUIREMENTS)
 	def get_meter(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'get_meter', None)	
 
-	@route('qos_switch', BASE_URL + '/meter/{switchid}', method=[POST], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/meter/{switchid}', methods=['POST'], requirements = REQUIREMENTS)
 	def set_meter(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'set_meter', None)	
 
-	@route('qos_switch', BASE_URL + '/meter/{switchid}', method=[DELETE], requirements = REQUIREMENTS)
+	@route('qos_switch', BASE_URL + '/meter/{switchid}', methods=['DELETE'], requirements = REQUIREMENTS)
 	def delete_meter(self, req, switchid, **_kwargs):
 		return self._access_switch(req, switchid, VLANID_NONE, 'delete_meter', None)	
 
@@ -581,9 +581,9 @@ class QoS(object):
 		for vid, rule in rules.items():
 			if vid == VLANID_NONE:
 				vid_data = {REST_QOS: rule}
-				else:
-					vid_data = {REST_VLANID: vid, REST_QOS: rule}
-				get_data.append(vid_data)
+			else:
+				vid_data = {REST_VLANID: vid, REST_QOS: rule}
+			get_data.append(vid_data)
 
 		return REST_COMMAND_RESULT, get_data
 
@@ -631,7 +631,7 @@ class QoS(object):
 			cmd = self.dp.ofproto.OFPFC_DELETE_STRICT
 			actions = []
 			delete_ids = {}
-			for cookie, priority match in delete_list:
+			for cookie, priority, match in delete_list:
 				flow = self._to_of_flow(cookie = cookie, priority=priority, match=match, actions=actions)
 				self.ofctl.mod_flow_entry(self.dp, flow, cmd)
 				vid = match.get(REST_DL_VLAN, VLANID_NONE)
@@ -711,8 +711,8 @@ class QoS(object):
 class Match(object):
 	_CONVERT = {REST_DL_TYPE:
 					{REST_DL_TYPE_ARP: ether.ETH_TYPE_ARP,
-					 REST_DL_TYPE_IPV4: ether.ETH_TYPE_IPV4,
-					 REST_DL_TYPE_IVP6: ether.ETH_TYPE_IPV6}
+					 REST_DL_TYPE_IPV4: ether.ETH_TYPE_IP,
+					 REST_DL_TYPE_IVP6: ether.ETH_TYPE_IPV6},
 				REST_NW_PROTO:
 					{REST_NW_PROTO_TCP: inet.IPPROTO_TCP,
 					REST_NW_PROTO_UDP: inet.IPPROTO_UDP,
@@ -731,7 +731,7 @@ class Match(object):
 			__inv_combi('%s=%s and %s=%s' %(args[0], args[1], args[2], args[3]))
 
 		def __inv_1and1(*args):
-			__inv_combi('%s and %s' % (args[0], args[1])	
+			__inv_combi('%s and %s' % (args[0], args[1]))	
 
 		def __inv_1and2(*args):
 			__inv_combi('%s and %s=%s' % (args[0], args[1], args[2]))
@@ -756,7 +756,7 @@ class Match(object):
 					__inv_2and1(REST_DL_TYPE, REST_DL_TYPE_IPV4, REST_SRC_IPV6)			
 				if REST_DST_IPV6 in rest:
 					__inv_2and1(REST_DL_TYPE, REST_DL_TYPE_IPV4, REST_DST_IPV6)	
-				if nw_proto == REST_NW_PROTO_ICMPv6
+				if nw_proto == REST_NW_PROTO_ICMPV6:
 					__inv_2and2(REST_DL_TYPE, REST_DL_TYPE_IPV4, REST_NW_PROTO, REST_NW_PROTO_ICMPv6)
 
 			elif dl_type == REST_DL_TYPE_IPV6:
@@ -764,7 +764,7 @@ class Match(object):
 					__inv_2and1(REST_DL_TYPE, REST_DL_TYPE_IPV6, REST_SRC_IP)			
 				if REST_DST_IP in rest:
 					__inv_2and1(REST_DL_TYPE, REST_DL_TYPE_IPV6, REST_DST_IP)	
-				if nw_proto == REST_NW_PROTO_ICMP
+				if nw_proto == REST_NW_PROTO_ICMP:
 					__inv_2and2(REST_DL_TYPE, REST_DL_TYPE_IPV6, REST_NW_PROTO, REST_NW_PROTO_ICMP)
 			else:
 				raise ValueError('Unknown dl_type: %s' % dl_type)
@@ -807,9 +807,9 @@ class Match(object):
 				elif nw_proto == REST_NW_PROTO_TCP or nw_proto == REST_NW_PROTO_UDP:
 					raise ValueError('no dl_type was specified')
 				else:
-					raise ValueError('Unknown nw_proto: %s' nw_proto)
+					raise ValueError('Unknown nw_proto: %s' % nw_proto)
 
-		for key, value iin rest.items():
+		for key, value in rest.items():
 			if key in Match._CONVERT:
 				if value in Match._CONVERT[key]:
 					match.setdefault(key, Match._CONVERT[key][value])
@@ -839,10 +839,10 @@ class Match(object):
 			if key == REST_SRC_IPV6 or key == REST_DST_IPV6:
 				if value == ipv6_dontcare:
 					continue
-			elif value ==0
+			elif value ==0:
 				continue
 
-			if key Match._CONVERT:
+			if key in Match._CONVERT:
 				conv = Match._CONVERT[key]
 				conv = dict((value, key) for key, value in conv.items())
 				match.setdefault(key, conv[value])
@@ -858,7 +858,7 @@ class Match(object):
 		ipv6_dontcare = '::'
 
 		match = {}
-		for key  value in of_match.items():
+		for key, value in of_match.items():
 			if key == REST_SRC_MAC or key == REST_DST_MAC:
 				if value == mac_dontcare:
 					continue
@@ -868,7 +868,7 @@ class Match(object):
 			if key == REST_SRC_IPV6 or key == REST_DST_IPV6:
 				if value == ipv6_dontcare:
 					continue
-			elif value ==0
+			elif value ==0:
 				continue
 			match.setdefault(key, value)
 
