@@ -118,7 +118,7 @@ class RestQoSAPI(app_manager.RyuApp):
 		self.data['dpset'] = self.dpset
 		self.data['waiters'] = self.waiters	
 		wsgi.registory['QoSController'] = self.data
-		wsgi.register(QosController, self.data)
+		wsgi.register(QoSController, self.data)
 
 	def stats_reply_handler(self,ev):
 		msg = ev.msg
@@ -211,6 +211,12 @@ class QoSController(ControllerBase):
 		super(QoSController, self).__init__(req, link, data, **config)
 		self.dpset = data['dpset']
 		self.waiters = data['waiters']
+		
+
+	@classmethod
+	def set_logger(cls, logger):
+		cls._LOGGER = logger
+		cls._LOGGER.propagate = False
 		hdlr = logging.StreamHandler()
 		fmt_str = '[QoS][%(levelname)s] %(message)s'
 		hdlr.setFormatter(logging.Formatter(fmt_str))
@@ -224,7 +230,7 @@ class QoSController(ControllerBase):
 		dpid_str = dpid_lib.dpid_to_str(dp.id)
 		try:
 			f_ofs = QoS(dp, CONF)
-			f_fos.set_default_flow()
+			f_ofs.set_default_flow()
 
 		except OFPUnknownVersion as message:
 			QoSController._LOGGER.info('dpid=%s: %s', dpid_str, message)
@@ -241,7 +247,7 @@ class QoSController(ControllerBase):
 
 	@staticmethod
 	def set_ovsdb_addr(dpid, value):
-		ofs = QosController._OFS_LIST.get(dpid, None)
+		ofs = QoSController._OFS_LIST.get(dpid, None)
 		if ofs is not None:
 			ofs.set_ovsdb_addr(dpid, value)
 

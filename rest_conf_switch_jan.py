@@ -57,7 +57,7 @@ class ConfSwitchController(ControllerBase):
 
 
 	@staticmethod
-	def _do_key(dpid, key, func, ret_fucn):
+	def _do_key(dpid, key, func, ret_func):
 		dpid = dpid_lib.str_to_dpid(dpid)
 		try:
 			ret = func(dpid, key)
@@ -72,10 +72,10 @@ class ConfSwitchController(ControllerBase):
 			self.conf_switch.set_key(dpid, key, val)
 			return None
 
-		def _ret(val):
+		def _ret(_ret):
 			return Response(status=httplib.CREATED)
 
-		return self._do_key(dpid, key, _get_key, _ret)
+		return self._do_key(dpid, key, _set_val, _ret)
 
 	def get_key(self, _req, dpid, key, **_kwargs):
 		def _get_key(dpid, key):
@@ -89,14 +89,14 @@ class ConfSwitchController(ControllerBase):
 class ConfSwitchAPI(app_manager.RyuApp):
 	_CONTEXTS = {'conf_switch': conf_switch.ConfSwitchSet,}
 
-	def __init__(self, *args, **_kwargs):
-		super(ConfSwitchAPI, self).__init__(*args, **_kwargs)
+	def __init__(self, *args, **kwargs):
+		super(ConfSwitchAPI, self).__init__(*args, **kwargs)
 		self.conf_switch = kwargs['conf_switch']
 		wsgi = kwargs['wsgi']
 		mapper = wsgi.mapper
 
 		controller = ConfSwitchController
-		wsgi.registry[controller.__name__] = self.conf_switch
+		wsgi.registory[controller.__name__] = self.conf_switch
 		route_name = 'conf_switch'
 		uri = '/v1.0/conf/switches'
 		mapper.connect(route_name, uri, controller=controller, action='list_switches', conditions=dict(method=['GET']))
@@ -104,7 +104,7 @@ class ConfSwitchAPI(app_manager.RyuApp):
 		requirements = {'dpid': dpid_lib.DPID_PATTERN}
 		s = mapper.submapper(controller=controller, requirements=requirements)
 		s.connect(route_name, uri, action='delete_switch', conditions=dict(method=['DELETE']))
-		uri += '/{key'
-		s.connect(route_name, uri, action=set_key, conditions=dic(method=['PUT']))
-		s.connect(route_name, uri, action=get_key, conditions=dic(method=['GET']))
-		s.connect(route_name, uri, action=delete_key, conditions=dic(method=['DELETE']))
+		uri += '/{key}'
+		s.connect(route_name, uri, action='set_key', conditions=dict(method=['PUT']))
+		s.connect(route_name, uri, action='get_key', conditions=dict(method=['GET']))
+		s.connect(route_name, uri, action='delete_key', conditions=dict(method=['DELETE']))
